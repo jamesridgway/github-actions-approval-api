@@ -1,0 +1,4 @@
+name: github-actions-approval-api-azure
+runtime: nodejs
+description: An API for requestion approval for GitHub actions via Microsoft Teams
+  and Slack
