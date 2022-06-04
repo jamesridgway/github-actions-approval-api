@@ -17,7 +17,12 @@ jobs:
       - run: |
          cd app
          npm install
-      - uses: pulumi/actions@v3
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 14.x
+      - run: |
+         cd infra-azure
+         npm install
         with:
           command: up
           stack-name: dev
