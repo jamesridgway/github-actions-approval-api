@@ -8,6 +8,7 @@ const { DefaultAzureCredential } = require("@azure/identity");
 const credential = new DefaultAzureCredential();
 const account = process.env.GHA_STORAGE_ACCOUNT;
 const tableName = process.env.GHA_TABLE_NAME;
+const websiteHostname = process.env.WEBSITE_HOSTNAME;
 
 const client = new TableClient(
   `https://${account}.table.core.windows.net`,
@@ -54,32 +55,35 @@ app.post("/api/approval", async (req, res) => {
     token,
   });
 
+  const actionUrl = `https://${websiteHostname}/api/approval/${approvalId}?token=${token}`;
+
   const webhookPayload = {
-    type: "AdaptiveCard",
-    body: [
+    "@type": "MessageCard",
+    "@context": "http://schema.org/extensions",
+    themeColor: "0076D7",
+    summary: `Deploy ${repositoryFullName}?`,
+    sections: [
       {
-        type: "TextBlock",
-        size: "Medium",
-        weight: "Bolder",
-        text: `Deploy ${repositoryFullName.split("/")[1]}`,
-      },
-      {
-        type: "TextBlock",
-        text: `Would you like to deploy ${repositoryFullName.split("/")[1]}?`,
-        wrap: true,
-      },
-    ],
-    actions: [
-      {
-        type: "Action.OpenUrl",
-        title: "Deploy",
-        url: `https://${process.env.WEBSITE_HOSTNAME}/api/approval/${approvalId}?token=${token}`,
-        style: "positive",
+        activityTitle: `Do you want to deploy ${repositoryFullName}?`,
+        activitySubtitle: `The latest commit is ${commitHash}`,
+        facts: [
+          {
+            name: "Commit",
+            value: commitHash,
+          },
+        ],
+        markdown: true,
       },
     ],
-    $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
-    version: "1.5",
+    potentialAction: [
+      {
+        "@type": "HttpPOST",
+        name: "Deploy",
+        target: actionUrl,
+      },
+    ],
   };
+  console.log(webhookPayload);
   const response = await axios.post(webhookUrl, webhookPayload);
   console.log(`Webhook responded with a ${response.status} response`);
 
@@ -88,7 +92,7 @@ app.post("/api/approval", async (req, res) => {
   });
 });
 
-app.get("/api/approval/:approval_id", (req, res) => {
+app.post("/api/approval/:approval_id", (req, res) => {
   res.json({
     approval_id: req.params.approval_id,
   });
