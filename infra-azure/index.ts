@@ -60,6 +60,8 @@ const app = new web.WebApp("fa", {
             { name: "FUNCTIONS_WORKER_RUNTIME", value: "node" },
             { name: "WEBSITE_NODE_DEFAULT_VERSION", value: "~14" },
             { name: "WEBSITE_RUN_FROM_PACKAGE", value: codeBlobUrl },
+            { name: "GHA_STORAGE_ACCOUNT", value: storageAccount.name },
+            { name: "GHA_TABLE_NAME", value: table.name },
         ],
         http20Enabled: true,
         nodeVersion: "~14",
