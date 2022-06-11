@@ -39,6 +39,12 @@ const plan = new web.AppServicePlan("plan", {
     },
 });
 
+const table = new storage.Table("approvalsTable", {
+    accountName: storageAccount.name,
+    resourceGroupName: resourceGroup.name,
+    tableName: "approvals",
+});
+
 // Build the connection string and zip archive's SAS URL. They will go to Function App's settings.
 const storageConnectionString = getConnectionString(resourceGroup.name, storageAccount.name);
 const codeBlobUrl = signedBlobReadUrl(codeBlob, codeContainer, storageAccount, resourceGroup);
@@ -60,4 +66,4 @@ const app = new web.WebApp("fa", {
     },
 });
 
-export const endpoint = pulumi.interpolate`https://${app.defaultHostName}/api/HelloNode?name=Pulumi`;
+export const endpoint = pulumi.interpolate`https://${app.defaultHostName}`;
