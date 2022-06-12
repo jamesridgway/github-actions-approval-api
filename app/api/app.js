@@ -4,22 +4,21 @@ const express = require("express");
 
 const { TableClient } = require("@azure/data-tables");
 const { DefaultAzureCredential } = require("@azure/identity");
+const { SecretClient } = require("@azure/keyvault-secrets");
+
+const { v4: uuidv4 } = require("uuid");
+
+const app = express();
 
 const credential = new DefaultAzureCredential();
 const account = process.env.GHA_STORAGE_ACCOUNT;
 const tableName = process.env.GHA_TABLE_NAME;
+const vaultName = process.env.GHA_VAULT_NAME;
 const websiteHostname = process.env.WEBSITE_HOSTNAME;
-const githubUsername = process.env.AUTH_GITHUB_USERNAME;
-const githubToken = process.env.AUTH_GITHUB_TOKEN;
 
-const client = new TableClient(
-  `https://${account}.table.core.windows.net`,
-  tableName,
-  credential
-);
-const { v4: uuidv4 } = require("uuid");
+const secretClient = new SecretClient(`https://${vaultName}.vault.azure.net`, credential);
+const client = new TableClient(`https://${account}.table.core.windows.net`, tableName, credential);
 
-const app = express();
 
 if (process.env.FUNCTIONS_WORKER_RUNTIME === undefined) {
   console.log("Running locally");
@@ -120,6 +119,9 @@ app.post("/api/approval/:partition_key/:approval_id", async (req, res) => {
         commit: approval.commitHash
       }
     };
+
+    const githubUsername = (await secretClient.getSecret('github-username')).value;
+    const githubToken = (await secretClient.getSecret('github-token')).value;
     const response = await axios.post(triggerWorkflowUrl, workflowPayload, {
       auth: {
         username: githubUsername,

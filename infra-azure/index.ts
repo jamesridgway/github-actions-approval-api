@@ -99,8 +99,7 @@ const app = new web.WebApp("ghapproval", {
             { name: "WEBSITE_RUN_FROM_PACKAGE", value: codeBlobUrl },
             { name: "GHA_STORAGE_ACCOUNT", value: storageAccount.name },
             { name: "GHA_TABLE_NAME", value: table.name },
-            { name: "AUTH_GITHUB_USERNAME", value: process.env.AUTH_GITHUB_USERNAME },
-            { name: "AUTH_GITHUB_TOKEN", value: process.env.AUTH_GITHUB_TOKEN },
+            { name: "GHA_VAULT_NAME", value: vault.name },
         ],
         http20Enabled: true,
         nodeVersion: "~14",
@@ -126,11 +125,11 @@ storageAccount.id.apply(storageAccountId => {
 vault.id.apply(vaultId => {
     console.log(vaultId.substring(1));
     app.identity.apply(functionIdentity => {
-        new authorization.RoleAssignment("ghapprovalVaultReader", {
+        new authorization.RoleAssignment("ghapprovalVaultSecretUser", {
             principalId: functionIdentity!.principalId,
             principalType: authorization.PrincipalType.ServicePrincipal,
-            roleAssignmentName: "0de1f3a2-e93b-4e19-a007-47a3855cd700",
-            roleDefinitionId: `/subscriptions/${subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/21090545-7ca7-4776-b22c-e363652d74d2`,
+            roleAssignmentName: "44dde629-0b1e-44cd-b5de-730655bb5717",
+            roleDefinitionId: `/subscriptions/${subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/4633458b-17de-408a-b874-0445c86b69e6`,
             scope: vaultId.substring(1),
         })
     });
