@@ -3,6 +3,8 @@ import * as pulumi from "@pulumi/pulumi";
 import * as resources from "@pulumi/azure-native/resources";
 import * as storage from "@pulumi/azure-native/storage";
 import * as web from "@pulumi/azure-native/web";
+import * as keyvault from "@pulumi/azure-native/keyvault";
+import * as authorization from "@pulumi/azure-native/authorization";
 import * as dotenv from 'dotenv';
 
 import { getConnectionString, signedBlobReadUrl } from "./helpers";
@@ -22,12 +24,12 @@ const storageAccount = new storage.StorageAccount("ghapproval", {
     kind: storage.Kind.StorageV2,
 });
 
-const codeContainer = new storage.BlobContainer("zips", {
+const codeContainer = new storage.BlobContainer("ghapproval-code", {
     resourceGroupName: resourceGroup.name,
     accountName: storageAccount.name,
 });
 
-const codeBlob = new storage.Blob("zip", {
+const codeBlob = new storage.Blob("ghapproval-code", {
     resourceGroupName: resourceGroup.name,
     accountName: storageAccount.name,
     containerName: codeContainer.name,
@@ -48,14 +50,46 @@ const table = new storage.Table("approvalsTable", {
     tableName: "approvals",
 });
 
-// Build the connection string and zip archive's SAS URL. They will go to Function App's settings.
+const vault = new keyvault.Vault("vault", {
+    properties: {
+        enableRbacAuthorization: true,
+        sku: {
+            family: "A",
+            name: keyvault.SkuName.Standard,
+        },
+        tenantId: process.env.AZURE_TENANT_ID!,
+    },
+    resourceGroupName: resourceGroup.name,
+    vaultName: "ghapprovals"
+});
+
+const githubUsername = new keyvault.Secret("githubUsername", {
+    properties: {
+        value: process.env.AUTH_GITHUB_USERNAME,
+    },
+    resourceGroupName: resourceGroup.name,
+    secretName: "github-username",
+    vaultName: vault.name,
+});
+const githubToken = new keyvault.Secret("githubToken", {
+    properties: {
+        value: process.env.AUTH_GITHUB_TOKEN,
+    },
+    resourceGroupName: resourceGroup.name,
+    secretName: "github-token",
+    vaultName: vault.name,
+});
+
 const storageConnectionString = getConnectionString(resourceGroup.name, storageAccount.name);
 const codeBlobUrl = signedBlobReadUrl(codeBlob, codeContainer, storageAccount, resourceGroup);
 
-const app = new web.WebApp("fa", {
+const app = new web.WebApp("ghapproval", {
     resourceGroupName: resourceGroup.name,
     serverFarmId: plan.id,
     kind: "functionapp",
+    identity: {
+        type: web.ManagedServiceIdentityType.SystemAssigned
+    },
     siteConfig: {
         appSettings: [
             { name: "AzureWebJobsStorage", value: storageConnectionString },
@@ -72,5 +106,20 @@ const app = new web.WebApp("fa", {
         nodeVersion: "~14",
     },
 });
+
+const subscriptionId = process.env.AZURE_SUBSCRIPTION_ID;
+
+app.identity.apply(functionIdentity => new authorization.RoleAssignment("ghapprovalResourceGroup", {
+    principalId: functionIdentity!.principalId,
+    principalType: authorization.PrincipalType.ServicePrincipal,
+    roleAssignmentName: "ghapproval-resource-group-contributor",
+    roleDefinitionId: `/subscriptions/${subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c`,
+    scope: `subscriptions/${subscriptionId}/resourceGroups/${resourceGroup.name}`,
+}));
+
+
+
+
+
 
 export const endpoint = pulumi.interpolate`https://${app.defaultHostName}`;

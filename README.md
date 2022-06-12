@@ -11,3 +11,9 @@ The API is responsible for triggering webhooks in API teams and receiving reques
 
 ## Required configuration
 In `./infra-azure` create a `.env` file based on the `.env.example`. Provide the details for a [personal access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token) that has permission to trigger workflows.
+
+| Environment Variable   | Description                  |
+| ---------------------- | ---------------------------  |
+| `AUTH_GITHUB_USERNAME` | GitHub Username              |
+| `AUTH_GITHUB_TOKEN`    | GitHub Personal Access Token |
+
