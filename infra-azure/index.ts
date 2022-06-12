@@ -114,7 +114,7 @@ app.identity.apply(functionIdentity => new authorization.RoleAssignment("ghappro
     principalType: authorization.PrincipalType.ServicePrincipal,
     roleAssignmentName: "ghapproval-resource-group-contributor",
     roleDefinitionId: `/subscriptions/${subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c`,
-    scope: `subscriptions/${subscriptionId}/resourceGroups/${resourceGroup.name}`,
+    scope: `subscriptions/${subscriptionId}/resourceGroups/gh-approval-api`,
 }));
 
 
