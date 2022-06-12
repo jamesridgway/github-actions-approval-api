@@ -112,18 +112,11 @@ const subscriptionId = process.env.AZURE_SUBSCRIPTION_ID;
 storageAccount.id.apply(storageAccountId => {
     console.log(storageAccountId.substring(1));
     app.identity.apply(functionIdentity => {
-        new authorization.RoleAssignment("ghapprovalStorageAccount", {
+        new authorization.RoleAssignment("ghapprovalStorageTableDataContributor", {
             principalId: functionIdentity!.principalId,
             principalType: authorization.PrincipalType.ServicePrincipal,
-            roleAssignmentName: "4b4f34b6-d7b8-4552-9988-aa826c7a2d9c",
-            roleDefinitionId: `/subscriptions/${subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/ba92f5b4-2d11-453d-a403-e96b0029c9fe`,
-            scope: storageAccountId.substring(1),
-        })
-        new authorization.RoleAssignment("ghapprovalStorageAccountQueue", {
-            principalId: functionIdentity!.principalId,
-            principalType: authorization.PrincipalType.ServicePrincipal,
-            roleAssignmentName: "3b4055d1-4815-4dc9-a9d1-b528738ea4d7",
-            roleDefinitionId: `/subscriptions/${subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/974c5e8b-45b9-4653-ba55-5f855dd0fb88`,
+            roleAssignmentName: "9f253bae-20d1-4e0a-a25b-208f266e5078",
+            roleDefinitionId: `/subscriptions/${subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3`,
             scope: storageAccountId.substring(1),
         })
     });
@@ -136,7 +129,7 @@ vault.id.apply(vaultId => {
         new authorization.RoleAssignment("ghapprovalVaultReader", {
             principalId: functionIdentity!.principalId,
             principalType: authorization.PrincipalType.ServicePrincipal,
-            roleAssignmentName: "f23d6374-90f2-4488-97c0-cc5ccc8851da",
+            roleAssignmentName: "0de1f3a2-e93b-4e19-a007-47a3855cd700",
             roleDefinitionId: `/subscriptions/${subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/21090545-7ca7-4776-b22c-e363652d74d2`,
             scope: vaultId.substring(1),
         })
