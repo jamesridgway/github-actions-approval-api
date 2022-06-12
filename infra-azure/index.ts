@@ -3,8 +3,11 @@ import * as pulumi from "@pulumi/pulumi";
 import * as resources from "@pulumi/azure-native/resources";
 import * as storage from "@pulumi/azure-native/storage";
 import * as web from "@pulumi/azure-native/web";
+import * as dotenv from 'dotenv';
 
 import { getConnectionString, signedBlobReadUrl } from "./helpers";
+
+dotenv.config();
 
 // Create a separate resource group for this example.
 const resourceGroup = new resources.ResourceGroup("gh-approval-api");
@@ -62,6 +65,8 @@ const app = new web.WebApp("fa", {
             { name: "WEBSITE_RUN_FROM_PACKAGE", value: codeBlobUrl },
             { name: "GHA_STORAGE_ACCOUNT", value: storageAccount.name },
             { name: "GHA_TABLE_NAME", value: table.name },
+            { name: "AUTH_GITHUB_USERNAME", value: process.env.AUTH_GITHUB_USERNAME },
+            { name: "AUTH_GITHUB_TOKEN", value: process.env.AUTH_GITHUB_TOKEN },
         ],
         http20Enabled: true,
         nodeVersion: "~14",

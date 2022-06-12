@@ -9,6 +9,8 @@ const credential = new DefaultAzureCredential();
 const account = process.env.GHA_STORAGE_ACCOUNT;
 const tableName = process.env.GHA_TABLE_NAME;
 const websiteHostname = process.env.WEBSITE_HOSTNAME;
+const githubUsername = process.env.AUTH_GITHUB_USERNAME;
+const githubToken = process.env.AUTH_GITHUB_TOKEN;
 
 const client = new TableClient(
   `https://${account}.table.core.windows.net`,
@@ -46,16 +48,19 @@ app.post("/api/approval", async (req, res) => {
     `Triggered by ${repositoryFullName} at commit ${commitHash}. Prompt to kick off workflow ${workflowIdToTrigger}`
   );
 
+  const partitionKey = repositoryFullName.replace("/", "_");
+
   await client.createEntity({
-    partitionKey: repositoryFullName.replace("/", "_"),
+    partitionKey,
     rowKey: approvalId,
+    repositoryFullName,
     commitHash,
     workflowIdToTrigger,
     webhookUrl,
     token,
   });
 
-  const actionUrl = `https://${websiteHostname}/api/approval/${approvalId}?token=${token}`;
+  const actionUrl = `https://${websiteHostname}/api/approval/${partitionKey}/${approvalId}?token=${token}`;
 
   const webhookPayload = {
     "@type": "MessageCard",
@@ -83,7 +88,6 @@ app.post("/api/approval", async (req, res) => {
       },
     ],
   };
-  console.log(webhookPayload);
   const response = await axios.post(webhookUrl, webhookPayload);
   console.log(`Webhook responded with a ${response.status} response`);
 
@@ -92,10 +96,38 @@ app.post("/api/approval", async (req, res) => {
   });
 });
 
-app.post("/api/approval/:approval_id", (req, res) => {
-  res.json({
-    approval_id: req.params.approval_id,
-  });
+app.post("/api/approval/:partition_key/:approval_id", async (req, res) => {
+  const partitionKey = req.params.partition_key;
+  const rowKey = req.params.approval_id;
+
+  try {
+    const approval = await client.getEntity(partitionKey, rowKey);
+    if (approval.token != req.query.token) {
+      res.json({ error: 'not-found' }).status(404);
+      return;
+    }
+
+    const triggerWorkflowUrl = `https://api.github.com/repos/${approval.repositoryFullName}/actions/workflows/${approval.workflowIdToTrigger}/dispatches`;
+    const workflowPayload = {
+      ref: 'main',
+      inputs: {
+        commit: approval.commitHash
+      }
+    };
+    const response = await axios.post(triggerWorkflowUrl, workflowPayload, {
+      auth: {
+        username: githubUsername,
+        password: githubToken
+      }});
+    console.log(`GitHub workflow dispatch trigger responded with a ${response.status} response`);
+    res.json({
+      id: rowKey,
+      success: response.status == 200
+    });
+  } catch (ex) {
+    console.log(ex);
+  }
+  res.json({ error: 'not-found' }).status(404);
 });
 
 module.exports = app;
