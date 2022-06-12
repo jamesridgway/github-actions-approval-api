@@ -50,15 +50,21 @@ app.post("/api/approval", async (req, res) => {
 
   const partitionKey = repositoryFullName.replace("/", "_");
 
-  await client.createEntity({
-    partitionKey,
-    rowKey: approvalId,
-    repositoryFullName,
-    commitHash,
-    workflowIdToTrigger,
-    webhookUrl,
-    token,
-  });
+  try {
+    await client.createEntity({
+      partitionKey,
+      rowKey: approvalId,
+      repositoryFullName,
+      commitHash,
+      workflowIdToTrigger,
+      webhookUrl,
+      token,
+    });
+  } catch (ex) {
+    console.log('Failed to create entity in table storage', ex);
+    res.json({error: 'internal-server'}).status(500);
+    return;
+  }
 
   const actionUrl = `https://${websiteHostname}/api/approval/${partitionKey}/${approvalId}?token=${token}`;
 

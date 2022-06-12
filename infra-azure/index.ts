@@ -109,17 +109,38 @@ const app = new web.WebApp("ghapproval", {
 
 const subscriptionId = process.env.AZURE_SUBSCRIPTION_ID;
 
-app.identity.apply(functionIdentity => new authorization.RoleAssignment("ghapprovalResourceGroup", {
-    principalId: functionIdentity!.principalId,
-    principalType: authorization.PrincipalType.ServicePrincipal,
-    roleAssignmentName: "ghapproval-resource-group-contributor",
-    roleDefinitionId: `/subscriptions/${subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c`,
-    scope: `subscriptions/${subscriptionId}/resourceGroups/gh-approval-api`,
-}));
+storageAccount.id.apply(storageAccountId => {
+    console.log(storageAccountId.substring(1));
+    app.identity.apply(functionIdentity => {
+        new authorization.RoleAssignment("ghapprovalStorageAccount", {
+            principalId: functionIdentity!.principalId,
+            principalType: authorization.PrincipalType.ServicePrincipal,
+            roleAssignmentName: "4b4f34b6-d7b8-4552-9988-aa826c7a2d9c",
+            roleDefinitionId: `/subscriptions/${subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/ba92f5b4-2d11-453d-a403-e96b0029c9fe`,
+            scope: storageAccountId.substring(1),
+        })
+        new authorization.RoleAssignment("ghapprovalStorageAccountQueue", {
+            principalId: functionIdentity!.principalId,
+            principalType: authorization.PrincipalType.ServicePrincipal,
+            roleAssignmentName: "3b4055d1-4815-4dc9-a9d1-b528738ea4d7",
+            roleDefinitionId: `/subscriptions/${subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/974c5e8b-45b9-4653-ba55-5f855dd0fb88`,
+            scope: storageAccountId.substring(1),
+        })
+    });
+});
 
 
-
-
-
+vault.id.apply(vaultId => {
+    console.log(vaultId.substring(1));
+    app.identity.apply(functionIdentity => {
+        new authorization.RoleAssignment("ghapprovalVaultReader", {
+            principalId: functionIdentity!.principalId,
+            principalType: authorization.PrincipalType.ServicePrincipal,
+            roleAssignmentName: "f23d6374-90f2-4488-97c0-cc5ccc8851da",
+            roleDefinitionId: `/subscriptions/${subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/21090545-7ca7-4776-b22c-e363652d74d2`,
+            scope: vaultId.substring(1),
+        })
+    });
+});
 
 export const endpoint = pulumi.interpolate`https://${app.defaultHostName}`;
