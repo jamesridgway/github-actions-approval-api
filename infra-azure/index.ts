@@ -79,6 +79,14 @@ const githubToken = new keyvault.Secret("githubToken", {
     secretName: "github-token",
     vaultName: vault.name,
 });
+const actionsApprovalApiKey = new keyvault.Secret("actionsApprovalApiKey", {
+    properties: {
+        value: process.env.ACTIONS_APPROVAL_API_KEY,
+    },
+    resourceGroupName: resourceGroup.name,
+    secretName: "actions-approval-api-key",
+    vaultName: vault.name,
+});
 
 const storageConnectionString = getConnectionString(resourceGroup.name, storageAccount.name);
 const codeBlobUrl = signedBlobReadUrl(codeBlob, codeContainer, storageAccount, resourceGroup);

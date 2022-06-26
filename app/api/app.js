@@ -43,6 +43,14 @@ app.post("/api/approval", async (req, res) => {
   const approvalId = uuidv4();
   const token = uuidv4();
 
+  const apiKey = (await secretClient.getSecret('actions-approval-api-key')).value;
+
+  if (req.headers['x-api-key'] !== apiKey) {
+    res.json({error: 'unauthorized'}).status(401);
+    return;
+  }
+
+
   console.log(
     `Triggered by ${repositoryFullName} at commit ${commitHash}. Prompt to kick off workflow ${workflowIdToTrigger}`
   );
