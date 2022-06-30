@@ -13,7 +13,7 @@ The API is responsible for triggering webhooks in API teams and receiving reques
 
 For a detailed explanation of how this works checkout this blog post:
 
-* Approving Builds and Workflows with GitHub Actions and Microsoft Teams
+* (Approving Builds and Workflows with GitHub Actions and Microsoft Teams)[https://www.jamesridgway.co.uk/approving-builds-and-workflows-with-github-actions-and-microsoft-teams/]
 
 ## Required configuration
 In `./infra-azure` create a `.env` file based on the `.env.example`. Provide the details for a [personal access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token) that has permission to trigger workflows.
